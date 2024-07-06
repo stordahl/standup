@@ -9,8 +9,13 @@ rm -rf build
 mkdir build
 
 luastatic \
-	src/app.lua \
+  standup.lua \
+	standup/init.lua \
+  standup/core.lua \
+  standup/db.lua \
+  standup/string.lua \
+  standup/utils.lua \
 	$(brew --prefix lua)/lib/liblua.a -I$(brew --prefix lua)/include/lua \
-	-o build/app
+	-o build/standup
 
-mv app.luastatic.c build/
+mv standup.luastatic.c build/

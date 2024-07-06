@@ -1,6 +1,6 @@
-# lua cli starter
+# standup
 #
-# Replace all instances of `app` with your cli's root command
+# Brain dumping on the command line
 #
 # Luastatic command line tool is a prerequisite for this build process
 # https://github.com/ers35/luastatic
@@ -13,5 +13,8 @@ build:
 install: 
 	bash ./scripts/install.sh
 
+run-local:
+	./build/standup --help
+
 uninstall:
-	sudo rm /usr/local/bin/app
+	sudo rm /usr/local/bin/standup
