@@ -6,7 +6,6 @@ local utils        = require('standup.utils')
 local standup_dir  = os.getenv("HOME") .. '/.standup/'
 local db_file_name = 'standup.sqlite'
 local db_file_path = standup_dir .. db_file_name
-local inspect      = require('inspect')
 
 local _M = {}
 
@@ -130,5 +129,20 @@ function _M.clean_group(group_name)
   db:close()
 end
 
+function _M.rm_group(group_name)
+  local db = sql.open(db_file_path)
+  local heading = '\nRemoving group ' .. group_name .. '...'
+  print(heading)
+  db:exec('delete from groups where name = \'' .. group_name .. '\'')
+  db:close()
+end
+
+function _M.rm_group_item(group_name, item_id)
+  local db = sql.open(db_file_path)
+  local heading = '\nRemoving item '.. item_id .. ' from group ' .. group_name .. '...'
+  print(heading)
+  db:exec('delete from items where id = \'' .. item_id .. '\'')
+  db:close()
+end
 
 return _M

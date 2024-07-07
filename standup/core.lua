@@ -23,7 +23,9 @@ function _M.get_available_opts()
     add     = { flags = {'add'},
                 help_text = 'Add a group or an item.'},
     clean   = { flags = {'clean'},
-                help_text = 'Remove all items in a group'}
+                help_text = 'Remove all items in a group'},
+    rm      = { flags = {'rm'},
+                help_text = 'Remove group. Pass an item id to remove a single item'}
   }
   return t
 end
@@ -51,13 +53,13 @@ end
 
 -- Prints version information to the screen
 --
-function _M.run_version_opt(t)
+function _M.run_version_opt(_)
   print(str_fmt('standup version: %s', utils.get_version()))
 end
 
 -- Prints help message
 --
-function _M.run_help_opt(t)
+function _M.run_help_opt(_)
   print(_M.get_help_str())
 end
 
@@ -82,7 +84,7 @@ function _M.get_help_str()
 
   table_insert(t, '\nCommands:')
 
-  for opt_label, opt in pairs(_M.get_available_opts()) do
+  for _, opt in pairs(_M.get_available_opts()) do
     local flags = table_concat(opt['flags'], ', ')
     table_insert(t, str_fmt('\n  %s\t%s', flags, opt['help_text']))
   end
@@ -90,7 +92,7 @@ function _M.get_help_str()
   return table_concat(t)
 end
 
-function _M.run_init_opt(t)
+function _M.run_init_opt(_)
   db.init_db()
 end
 
@@ -116,6 +118,16 @@ function _M.run_clean_opt(t)
   if #t.args == 2 then
     local name = t.args[2]
     return db.clean_group(name)
+  end
+  _M.print_err("Invalid Arguments. See standup --help")
+end
+
+function _M.run_rm_opt(t)
+  if #t.args == 2 then
+    return db.rm_group(t.args[2])
+  end
+  if #t.args == 3 then
+    return db.rm_group_item(t.args[2], t.args[3])
   end
   _M.print_err("Invalid Arguments. See standup --help")
 end
