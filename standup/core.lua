@@ -1,12 +1,9 @@
 local db           = require 'standup.db'
 local utils        = require 'standup.utils'
 
-local io_write     = io.write
 local str_fmt      = string.format
-local str_rep      = string.rep
 local table_concat = table.concat
 local table_insert = table.insert
-local table_sort = table.sort
 
 local _M = {}
 
@@ -22,7 +19,11 @@ function _M.get_available_opts()
     init    = { flags = {'init'},
                 help_text = 'Create a new sqlite db in ~/.standup'},
     ls      = { flags = {'ls'},
-                help_text = 'List all groups. Pass a group id to list all items in that group.'}
+                help_text = 'List all groups. Pass a group id to list all items in that group.'},
+    add     = { flags = {'add'},
+                help_text = 'Add a group or an item.'},
+    clean   = { flags = {'clean'},
+                help_text = 'Remove all items in a group'}
   }
   return t
 end
@@ -96,6 +97,26 @@ end
 function _M.run_ls_opt(t)
   if #t.args == 1 then return db.list_groups() end
   if #t.args == 2 then return db.list_group_items(t.args[2]) end
+  _M.print_err("Invalid Arguments. See standup --help")
+end
+
+function _M.run_add_opt(t)
+  if #t.args == 2 then
+    local name = t.args[2]
+    print("Creating group " .. name)
+    return db.add_group(name)
+  end
+  if #t.args == 3 then
+    return db.add_group_item(t.args[2], t.args[3])
+  end
+  _M.print_err("Invalid Arguments. See standup --help")
+end
+
+function _M.run_clean_opt(t)
+  if #t.args == 2 then
+    local name = t.args[2]
+    return db.clean_group(name)
+  end
   _M.print_err("Invalid Arguments. See standup --help")
 end
 
