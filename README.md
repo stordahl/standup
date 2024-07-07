@@ -1,21 +1,36 @@
-# Lua CLI Starter
+# standup
 
-Build standalone executable CLIs with Lua
+Brain dumping on the command line.
 
-## Overview
+## Motivation
 
-This project acts as a starting point for building command line apps with Lua. It comes with a simple "Hello World" app that demonstrates some basic argument parsing.
+I often struggle to keep track of disparate notes, particularly related to recurring meetings I have. I created standup to solve this problem. Standup allows you to easily create groups of notes, stored on a local SQLite database. 
 
 ## Usage
 
-To use this repo...
+```bash
+# print help
+standup
+standup --help
 
-- Clone the repo to your machine
-- Rename `/src/app.lua` to `/src/{your app name}.lua`
-- Replace all instances of `app` in the Makefile and all scripts with your app name
-- Then build your app inside of `/src`!
+# init
+standup init # create a new sqlite db in ~/.standup
 
-When you want to build the app, simply run `make build`. This will create an executable inside `/build`
+# ls
+standup ls # prints all groups
+stand ls [group] # prints all items in a group
+
+# add
+standup add [group] # add a new group
+standup add [group] [item] # add an item to a group
+
+# clean
+standup clean [group] # remove all items from a group
+
+# rm
+standup rm [group] # removes an entire group
+standup rm [group] [id] 
+```
 
 ## References
 
