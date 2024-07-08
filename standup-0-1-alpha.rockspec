@@ -1,5 +1,5 @@
 package = "standup"
-version = "dev-1"
+version = "0.1-alpha"
 source = {
    url = "https://github.com/stordahl/standup"
 }
