@@ -18,39 +18,19 @@ function _M.init_db()
   os.execute("mkdir " .. standup_dir)
   os.execute("cd " .. standup_dir)
   local db = sql.open(db_file_path)
-  db:exec[=[ PRAGMA foreign_keys = ON; ]=]
-  db:exec[=[
-    CREATE TABLE IF NOT EXISTS groups(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name STRING
-    );
-    INSERT INTO groups (name) VALUES('1:1');
-    INSERT INTO groups (name) VALUES('standup');
-  ]=]
-  db:exec[=[
-    CREATE TABLE IF NOT EXISTS items(
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      content STRING,
-      group_id INTEGER,
-      FOREIGN KEY(group_id) REFERENCES groups(id)
-    );
-    INSERT INTO items (content, group_id) VALUES('promotion',1);
-    INSERT INTO items (content, group_id) VALUES('code review issues',1);
-    INSERT INTO items (content, group_id) VALUES('deploying late', 2);
-  ]=]
+  db:exec(_M.queries.enable_foreign_keys)
+  db:exec(_M.queries.create_groups_table)
+  db:exec(_M.queries.create_items_table)
   db:close()
   print("Database Successfully created in " .. standup_dir)
 end
 
 function _M.list_groups()
-  local heading = '\nListing all groups...'
+  string.print_heading('Listing all groups...')
 
   local db = sql.open(db_file_path)
 
-  print(heading)
-  string.print_line()
-
-  for rows in db:nrows('SELECT * FROM groups') do
+  for rows in db:nrows(_M.queries.select_all_groups) do
     table_sort(rows, function(a,b) return a < b end)
     for k, v in pairs(rows) do
       print(k .. "\t", v)
@@ -62,18 +42,11 @@ function _M.list_groups()
 end
 
 function _M.list_group_items(group_name)
+  string.print_heading('Listing all items in group ' .. group_name .. '...')
+
   local db = sql.open(db_file_path)
-  local heading = '\nListing all items in group ' .. group_name .. '...'
 
-  print(heading)
-  string.print_line()
-  local group_id = 0
-
-  db:exec('select id from groups where name =\'' .. group_name .. '\'', function(_, _, values, _)
-    group_id = values[1]
-  end)
-
-  for rows in db:nrows('SELECT * FROM items WHERE group_id = \'' .. group_id .. '\'') do
+  for rows in db:nrows(_M.queries.list_items(group_name)) do
     table_sort(rows, function(a,b) return a < b end)
     local id = 0
     local content = ''
@@ -88,9 +61,9 @@ function _M.list_group_items(group_name)
 end
 
 function _M.add_group(name)
+  print('Creating group ' .. name .. '...')
   local db = sql.open(db_file_path)
-  local query = "INSERT INTO groups(name) VALUES(?)"
-  local stmt = db:prepare(query)
+  local stmt = db:prepare(_M.queries.insert_group)
   stmt:bind_values(name)
   stmt:step()
   stmt:finalize()
@@ -98,51 +71,70 @@ function _M.add_group(name)
 end
 
 function _M.add_group_item(group_name, content)
+  print('Adding item to group ' .. group_name .. '...')
+
   local db = sql.open(db_file_path)
-  local heading = '\nAdding item to group ' .. group_name .. '...'
-  print(heading)
-  local group_id = 0
-  for rows in db:nrows('select id from groups where name = \'' .. group_name .. '\'') do
-    for _, v in pairs(rows) do
-      group_id = v
-    end
-  end
-  local query = "insert into items(content, group_id) VALUES(?,?)"
-  local stmt = db:prepare(query)
-  stmt:bind_values(content, group_id)
+
+  local stmt = db:prepare(_M.queries.insert_item)
+  stmt:bind_values(content, group_name)
   stmt:step()
   stmt:finalize()
   db:close()
 end
 
 function _M.clean_group(group_name)
+  print('Cleaning group ' .. group_name .. '...')
+
   local db = sql.open(db_file_path)
-  local heading = '\nCleaning group ' .. group_name .. '...'
-  print(heading)
-  local group_id = 0
-  for rows in db:nrows('select id from groups where name = \'' .. group_name .. '\'') do
-    for _, v in pairs(rows) do
-      group_id = v
-    end
-  end
-  db:exec('delete from items where group_id = \'' .. group_id .. '\'')
+
+  db:exec(_M.queries.delete_items_by_group(group_name))
   db:close()
 end
 
 function _M.rm_group(group_name)
+  print('Removing group ' .. group_name .. '...')
+
   local db = sql.open(db_file_path)
-  local heading = '\nRemoving group ' .. group_name .. '...'
-  print(heading)
-  db:exec('delete from groups where name = \'' .. group_name .. '\'')
+  db:exec(_M.queries.delete_group(group_name))
   db:close()
 end
 
 function _M.rm_group_item(group_name, item_id)
+  print('Removing item '.. item_id .. ' from group ' .. group_name .. '...')
+
   local db = sql.open(db_file_path)
-  local heading = '\nRemoving item '.. item_id .. ' from group ' .. group_name .. '...'
-  print(heading)
-  db:exec('delete from items where id = \'' .. item_id .. '\'')
+  db:exec(_M.queries.delete_item_by_id(item_id))
   db:close()
 end
+
+_M.queries = {
+  enable_foreign_keys = [=[ pragma foreign_keys = on; ]=],
+  create_groups_table = [=[
+    create table if not exists groups(
+      id integer primary key autoincrement,
+      name text not null
+    );
+    insert into groups (name) values('1:1');
+    insert into groups (name) values('standup');
+  ]=],
+  create_items_table = [=[
+    create table if not exists items(
+      id integer primary key autoincrement,
+      content text,
+      group_name text,
+      foreign key(group_name) references groups(name)
+    );
+    insert into items (content, group_name) values('promotion','1:1');
+    insert into items (content, group_name) values('code review issues','1:1');
+    insert into items (content, group_name) values('deploying late', 'standup');
+  ]=],
+  delete_item_by_id = function(item_id) return 'delete from items where id = \'' .. item_id .. '\'' end,
+  delete_items_by_group = function(group_name) return 'delete from items where group_name = \'' .. group_name .. '\'' end,
+  delete_group = function(group_name) return 'delete from groups where name = \'' .. group_name .. '\'' end,
+  insert_item = 'insert into items(content, group_name) values(?,?)',
+  insert_group = 'insert into groups(name) values(?)',
+  list_items = function(group_name) return 'select * from items where group_name = \'' .. group_name .. '\'' end,
+  select_all_groups = 'select * from groups'
+}
 
 return _M
