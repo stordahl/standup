@@ -34,44 +34,32 @@ end
 -- in `get_available_opts` function
 --
 function _M.get_opt(args)
-  --if #args == 1 then -- option can only be a single argument
-    for opt_label, opt in pairs(_M.get_available_opts()) do
-      for _, flag in pairs(opt['flags']) do
-        if flag == args[1] then return opt_label end
-      end
+  for opt_label, opt in pairs(_M.get_available_opts()) do
+    for _, flag in pairs(opt['flags']) do
+      if flag == args[1] then return opt_label end
     end
-  --end
+  end
 
   return nil
 end
 
 -- Calls standup module function with the following name: `run_{opt_name}_opt`
---
 function _M.run_opt(t)
   return _M['run_' .. t.opt .. '_opt'](t)
 end
 
--- Prints version information to the screen
---
 function _M.run_version_opt(_)
   print(str_fmt('standup version: %s', utils.get_version()))
 end
 
--- Prints help message
---
 function _M.run_help_opt(_)
   print(_M.get_help_str())
 end
 
--- Prints error message to the screen
---
 function _M.print_err(err)
   print(str_fmt('standup: %s\nSee \'standup -h\' or \'standup --help\'', err))
 end
 
--- Returns the usage text using the definition table
--- from the `get_available_opts` function
---
 function _M.get_help_str()
   local t = {
     'standup - brain dumping on the command line\n\n',

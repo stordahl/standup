@@ -1,9 +1,8 @@
 local standup   = require 'standup.core'
 local utils = require 'standup.utils'
 
-local args       = arg
+local args = arg
 
--- Attempt to retrieve a CLI argument option
 local opt = standup.get_opt(args)
 
 -- If no argument, or a `help` option -> print help message
